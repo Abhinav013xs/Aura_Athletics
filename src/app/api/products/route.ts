@@ -58,6 +58,9 @@ const SEED_PRODUCTS = [
 export async function GET(request: Request) {
   try {
     await dbConnect();
+    if ((global as any).IS_MOCKED_DB) {
+      return NextResponse.json(SEED_PRODUCTS);
+    }
     let products = await Product.find({});
 
     if (products.length === 0) {
@@ -75,6 +78,9 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
+    if ((global as any).IS_MOCKED_DB) {
+      return NextResponse.json({ message: "Product created successfully (Mock Mode)", product: body }, { status: 201 });
+    }
     const product = await Product.create(body);
     return NextResponse.json({ message: "Product created successfully", product }, { status: 201 });
   } catch (error: any) {

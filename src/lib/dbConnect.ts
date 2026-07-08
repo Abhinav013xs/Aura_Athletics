@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/aura-athletics";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 let cached = (global as any).mongoose;
 
@@ -8,7 +8,21 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
+// Initialize mock store for zero-database offline deployment fallback
+if (!(global as any).mockStore) {
+  (global as any).mockStore = {
+    bookings: [],
+    users: [],
+  };
+}
+
 async function dbConnect() {
+  if (!MONGODB_URI) {
+    (global as any).IS_MOCKED_DB = true;
+    console.warn("MONGODB_URI is not set. Operating in offline mock mode.");
+    return { conn: null, mock: true };
+  }
+
   if (cached.conn) {
     return cached.conn;
   }

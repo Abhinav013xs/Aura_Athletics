@@ -9,6 +9,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
+    if ((global as any).IS_MOCKED_DB) {
+      const bookingsList = (global as any).mockStore.bookings;
+      const filtered = email 
+        ? bookingsList.filter((b: any) => b.email === email.toLowerCase())
+        : bookingsList;
+      return NextResponse.json(filtered);
+    }
+
     let query = {};
     if (email) {
       query = { email: email.toLowerCase() };
@@ -29,6 +37,26 @@ export async function POST(request: Request) {
 
     if (!name || !email || !phone || !program || !date || !timeSlot) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if ((global as any).IS_MOCKED_DB) {
+      const newBooking = {
+        _id: "mock-booking-" + Date.now(),
+        userId: userId || null,
+        name,
+        email: email.toLowerCase(),
+        phone,
+        program,
+        trainerId: trainerId || null,
+        date,
+        timeSlot,
+        amount: amount || 0,
+        status: "confirmed", // Auto confirm in this luxury showcase
+        paymentStatus: amount > 0 ? "paid" : "pending",
+        createdAt: new Date().toISOString()
+      };
+      (global as any).mockStore.bookings.push(newBooking);
+      return NextResponse.json({ message: "Booking confirmed (Mock Mode)", booking: newBooking }, { status: 201 });
     }
 
     const newBooking = await Booking.create({

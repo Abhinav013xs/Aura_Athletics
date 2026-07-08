@@ -29,6 +29,9 @@ const SEED_REVIEWS = [
 export async function GET() {
   try {
     await dbConnect();
+    if ((global as any).IS_MOCKED_DB) {
+      return NextResponse.json(SEED_REVIEWS);
+    }
     let reviews = await Review.find({ isAdminApproved: true });
 
     if (reviews.length === 0) {
@@ -49,6 +52,19 @@ export async function POST(request: Request) {
 
     if (!name || !rating || !comment) {
       return NextResponse.json({ error: "Name, rating, and comment are required" }, { status: 400 });
+    }
+
+    if ((global as any).IS_MOCKED_DB) {
+      const mockReview = {
+        _id: "mock-review-" + Date.now(),
+        name,
+        rating: Number(rating),
+        comment,
+        program: program || "General Fitness",
+        image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop",
+        isAdminApproved: true,
+      };
+      return NextResponse.json({ message: "Review added successfully (Mock Mode)", review: mockReview }, { status: 201 });
     }
 
     const review = await Review.create({

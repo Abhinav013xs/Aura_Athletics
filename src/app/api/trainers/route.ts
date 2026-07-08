@@ -41,6 +41,9 @@ const SEED_TRAINERS = [
 export async function GET() {
   try {
     await dbConnect();
+    if ((global as any).IS_MOCKED_DB) {
+      return NextResponse.json(SEED_TRAINERS);
+    }
     let trainers = await Trainer.find({});
 
     if (trainers.length === 0) {

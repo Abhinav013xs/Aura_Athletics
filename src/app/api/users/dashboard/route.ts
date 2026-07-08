@@ -12,7 +12,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
 
-    const user = await User.findById(userId);
+    let user;
+    if ((global as any).IS_MOCKED_DB) {
+      const usersList = (global as any).mockStore.users;
+      user = usersList.find((u: any) => u._id === userId);
+    } else {
+      user = await User.findById(userId);
+    }
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -85,7 +92,9 @@ export async function POST(request: Request) {
 
     user.loyaltyPoints = updatedPoints;
     user.badges = earnedBadges;
-    await user.save();
+    if (!(global as any).IS_MOCKED_DB) {
+      await user.save();
+    }
 
     return NextResponse.json({
       message: `${type.toUpperCase()} log updated successfully`,
